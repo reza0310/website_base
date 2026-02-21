@@ -1,0 +1,208 @@
+openapi: 3.1.0
+info:
+    title: "Common API"
+    description: TODO
+
+    contact:
+        email: celian.aldehuelo@gmail.com
+
+    version: 1.0.0
+
+servers:
+    - url: http://divagations-oniriques.fr/api/
+
+tags:
+    - name: auth
+      description: Authentication endpoint
+
+paths:
+    /auth/register:
+        put:
+            operationId: auth_register
+            tags: [auth]
+            description: Register un nouveau compte
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email: {type: string, format: email}
+                                pwd_public_key: {type: string, format: base64}
+            responses:
+                '201': {description: "Compte créé"}
+                '400': {$ref: "#/components/responses/400"}
+                '422': {$ref: "#/components/responses/422"}
+                '429': {$ref: "#/components/responses/429"}
+                '500': {$ref: "#/components/responses/500"}
+                '501': {$ref: "#/components/responses/501"}
+
+    /auth/login:
+        post:
+            operationId: auth_login
+            tags: [auth]
+            description: Login à un compte
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email: {type: string, format: email}
+                                refresh_pub_key: {type: string, format: base64}
+            responses:
+                '200':
+                    description: "Authentifié"
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cyphered_token: {type: string, format: base64}
+                                    cyphered_challenge: {type: string, format: base64}
+                '400': {$ref: "#/components/responses/400"}
+                '404': {$ref: "#/components/responses/404"}
+                '422': {$ref: "#/components/responses/422"}
+                '429': {$ref: "#/components/responses/429"}
+                '500': {$ref: "#/components/responses/500"}
+                '501': {$ref: "#/components/responses/501"}
+
+    /auth/refresh:
+        patch:
+            operationId: auth_refresh
+            tags: [auth]
+            description: Login à un compte à partir d'un refresh token
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email: {type: string, format: email}
+                                refresh_public_key: {type: string, format: base64}
+            responses:
+                '200':
+                    description: "Refresh token"
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cyphered_token: {type: string, format: base64}
+                                    cyphered_challenge: {type: string, format: base64}
+                '400': {$ref: "#/components/responses/400"}
+                '422': {$ref: "#/components/responses/422"}
+                '429': {$ref: "#/components/responses/429"}
+                '500': {$ref: "#/components/responses/500"}
+                '501': {$ref: "#/components/responses/501"}
+
+            security:
+                - token_authentified: []
+
+    /auth/check:
+        post:
+            operationId: auth_check
+            tags: [auth]
+            description: Vérifie si l'authenticiation à réussi
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                challenge: {type: string, examples: ["ping"]}
+            responses:
+                '200': {description: "Authentication correct"}
+                '400': {$ref: "#/components/responses/400"}
+                '401': {$ref: "#/components/responses/401"}
+                '422': {$ref: "#/components/responses/422"}
+                '429': {$ref: "#/components/responses/429"}
+                '500': {$ref: "#/components/responses/500"}
+                '501': {$ref: "#/components/responses/501"}
+
+            security:
+                - token_authentified: []
+
+components:
+    responses:
+        # 4xx errors
+        '400':
+            description: Mauvais arguments
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '401':
+            description: Pas les permissions
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '404':
+            description: Truc non trouvé
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '407':
+            description: Besoin d'être authentifié 
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '422':
+            description: Mauvais format JSON
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '429':
+            description: Trop de requettes
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '451':
+            description: Meurtre
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        # 5xx errors
+        '500':
+            description: Oups
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+        '501':
+            description: Pas implémenté
+            content:
+                application/json:
+                    schema:
+                        $ref: "#/components/schemas/error"
+
+    schemas:
+        error:
+            type: object
+            properties:
+                name: {type: string, description: Nom unique permetant d'identifié l'erreur}
+                desc: {type: string, description: Description à destination de l'utilisateur}
+
+    securitySchemes:
+        password_authentified:
+            type: apiKey
+            name: auth
+            in: query
+        refresh_authentified:
+            type: apiKey
+            name: auth
+            in: query
+        token_authentified:
+            type: apiKey
+            name: auth
+            in: query

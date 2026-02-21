@@ -1,0 +1,1 @@
+client, server and shared directories contain only TS code.
